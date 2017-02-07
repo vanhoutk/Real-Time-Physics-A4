@@ -1,0 +1,34 @@
+#version 330 core
+out vec4 colour;
+
+in vec4 FragPos;  
+in vec4 Normal;  
+  
+uniform vec4 lightPosition; 
+uniform vec4 viewPosition;
+uniform vec4 lightColour;
+uniform vec4 objectColour;
+
+void main()
+{
+    // Ambient
+    float ambientStrength = 0.5f;
+    vec4 ambient = ambientStrength * lightColour;
+  	
+    // Diffuse 
+    vec4 norm = normalize(Normal);
+    vec4 lightDir = normalize(lightPosition - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec4 diffuse = diff * lightColour;
+    
+    // Specular
+    float specularStrength = 0.9f;
+    vec4 viewDir = normalize(viewPosition - FragPos);
+    vec4 reflectDir = reflect(-lightDir, norm);  
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 256);
+    vec4 specular = specularStrength * spec * lightColour;  
+        
+    vec4 result = (ambient + diffuse + specular) * objectColour;
+    colour = result;
+	//colour = (ambient + diffuse) * objectColour;
+} 
