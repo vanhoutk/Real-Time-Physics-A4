@@ -19,6 +19,7 @@
 #include "Camera.h"
 #include "Distance.h"
 #include "Mesh.h"
+#include "Model.h"
 #include "PlaneRotation.h"
 #include "RigidBody.h"
 #include "Shader_Functions.h"
@@ -32,50 +33,43 @@ using namespace std;
  */
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))  // Macro for indexing vertex buffer
 
-#define NUM_MESHES   2
-#define NUM_SHADERS	 4
-#define NUM_TEXTURES 1
+#define NUM_MESHES   3
+#define NUM_SHADERS	 5
+#define NUM_TEXTURES 2
 
 bool firstMouse = true;
 bool keys[1024];
+bool useBoundingSpheres = true;
 Camera camera(vec3(0.0f, 0.0f, 4.0f));
-enum Meshes { CUBE_MESH, POINT_MESH };
-enum Shaders { SKYBOX, PARTICLE_SHADER, BASIC_TEXTURE_SHADER, LIGHT_SHADER };
-enum Textures { OBJECT_TEXTURE };
+enum Meshes { PLANE_MESH, ASTEROID_MESH, SPHERE_MESH };
+enum Shaders { SKYBOX, BASIC_COLOUR_SHADER, BASIC_TEXTURE_SHADER, LIGHT_SHADER, LIGHT_TEXTURE_SHADER };
+enum Textures { PLANE_TEXTURE, ASTEROID_TEXTURE };
 GLfloat cameraSpeed = 0.005f;
 GLfloat deltaTime = 1.0f / 60.0f;
+GLfloat friction = 0.05f;
 GLfloat lastX = 400, lastY = 300;
+GLfloat resilience = 0.98f;
+GLuint numRigidBodies = 20;
 GLuint shaderProgramID[NUM_SHADERS];
 int screenWidth = 1000;
 int screenHeight = 800;
 int stringIDs[3];
-Mesh lineMesh, pointMesh, triangleMesh, pyramidMesh;
-Mesh vertexMesh, edgeMesh, faceMesh;
-vec3 closestPoint = vec3(0.0f, 0.0f, 0.0f);
-vec3 point1 = vec3(-1.0f, -1.0f, 0.577f);
-vec3 point2 = vec3(1.0f, -1.0f, 0.577f);
-vec3 point3 = vec3(0.0f, 1.0f, 0.0f);
-vec3 point4 = vec3(0.0f, -1.0f, -1.166f);
-vec3 point0 = vec3(0.0f, -1.0f, 0.0f);
-
-int featureType = -1; // 0 - Vertex, 1 - Edge, 2 - Face
-vec3 p1 = vec3(0.0f, 0.0f, 0.0f);
-vec3 p2 = vec3(0.0f, 0.0f, 0.0f);
-vec3 p3 = vec3(0.0f, 0.0f, 0.0f);
-
-vec4 upV = vec4(0.0f, 1.0f, 0.0f, 0.0f);
-vec4 fV = vec4(0.0f, 0.0f, 1.0f, 0.0f);
-vec4 rightV = vec4(1.0f, 0.0f, 0.0f, 0.0f);
-versor orientation;
-mat4 rotationMat;
+//Model planeModel;
+Mesh asteroid, boundingBox, sphereMesh;
+vec4 red = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+vec4 green = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+vec4 yAxis = vec4(0.0f, 1.0f, 0.0f, 0.0f);
+vec4 xAxis = vec4(1.0f, 0.0f, 0.0f, 0.0f);
+vec4 zAxis = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+vector<RigidBody> rigidbodies;
 
 // | Resource Locations
-const char * meshFiles[NUM_MESHES] = { "../Meshes/cube.dae", "../Meshes/particle_reduced.dae" };
+const char * meshFiles[NUM_MESHES] = { "../Meshes/plane.obj", "../Meshes/particle_reduced.dae", "../Meshes/particle.dae" };
 const char * skyboxTextureFiles[6] = { "../Textures/DSposx.png", "../Textures/DSnegx.png", "../Textures/DSposy.png", "../Textures/DSnegy.png", "../Textures/DSposz.png", "../Textures/DSnegz.png"};
-const char * textureFiles[NUM_TEXTURES] = { "../Textures/asphalt.jpg" };
+const char * textureFiles[NUM_TEXTURES] = { "../Textures/plane.jpg", "../Textures/asteroid.jpg"  };
 
-const char * vertexShaderNames[NUM_SHADERS] = { "../Shaders/SkyboxVertexShader.txt", "../Shaders/ParticleVertexShader.txt", "../Shaders/BasicTextureVertexShader.txt", "../Shaders/LightVertexShader.txt" };
-const char * fragmentShaderNames[NUM_SHADERS] = { "../Shaders/SkyboxFragmentShader.txt", "../Shaders/ParticleFragmentShader.txt", "../Shaders/BasicTextureFragmentShader.txt", "../Shaders/LightFragmentShader.txt" };
+const char * vertexShaderNames[NUM_SHADERS] = { "../Shaders/SkyboxVertexShader.txt", "../Shaders/ParticleVertexShader.txt", "../Shaders/BasicTextureVertexShader.txt", "../Shaders/LightVertexShader.txt", "../Shaders/LightTextureVertexShader.txt" };
+const char * fragmentShaderNames[NUM_SHADERS] = { "../Shaders/SkyboxFragmentShader.txt", "../Shaders/ParticleFragmentShader.txt", "../Shaders/BasicTextureFragmentShader.txt", "../Shaders/LightFragmentShader.txt", "../Shaders/LightTextureFragmentShader.txt" };
 
 string frf(const float &f)
 {
@@ -87,28 +81,32 @@ string frf(const float &f)
 
 void draw_text()
 {
-	ostringstream distanceOSS, pointOSS, closestOSS;
-	string distanceString, pointString, closestString;
-	distanceOSS << "Distance: " << fixed << setprecision(3) << pointToPoint(point0, closestPoint);
-	pointOSS << "Point Location ( " << fixed << setprecision(3) << point0.v[0] << ", " << point0.v[1] << ", " << point0.v[2] << " )";
-	closestOSS << "Closest Point ( " << fixed << setprecision(3) << closestPoint.v[0] << ", " << closestPoint.v[1] << ", " << closestPoint.v[2] << " )";
+	ostringstream typeOSS, numOSS;
+	string typeString, numString;
+	if (useBoundingSpheres)
+		typeOSS << "Broad Phase Collision: Bounding Spheres";
+	else
+		typeOSS << "Broad Phase Collision:";
+
+	numOSS <<"Number of rigid bodies: " << numRigidBodies;
+	//closestOSS << "Closest Point ( " << fixed << setprecision(3) << closestPoint.v[0] << ", " << closestPoint.v[1] << ", " << closestPoint.v[2] << " )";
 	
-	distanceString = distanceOSS.str();
-	pointString = pointOSS.str();
-	closestString = closestOSS.str();
+	typeString = typeOSS.str();
+	numString = numOSS.str();
+	//closestString = closestOSS.str();
 	
-	update_text(stringIDs[0], distanceString.c_str());
-	update_text(stringIDs[1], pointString.c_str());
-	update_text(stringIDs[2], closestString.c_str());
+	update_text(stringIDs[0], typeString.c_str());
+	update_text(stringIDs[1], numString.c_str());
+	//update_text(stringIDs[2], closestString.c_str());
 
 	draw_texts();
 }
 
 void init_text()
 {
-	stringIDs[0] = add_text("Distance: ", -0.95f, 0.95f, 25.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-	stringIDs[1] = add_text("Point Location (,,)", -0.95f, 0.9f, 25.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-	stringIDs[2] = add_text("Closest Point (,,)", -0.95f, 0.85f, 25.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+	stringIDs[0] = add_text("Broad Phase Collision: ", -0.95f, 0.95f, 25.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+	stringIDs[1] = add_text("Number of rigid bodies: ", -0.95f, 0.9f, 25.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+	//stringIDs[2] = add_text("Closest Point (,,)", -0.95f, 0.85f, 25.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void display() 
@@ -120,104 +118,26 @@ void display()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Draw skybox first
-	//mat4 view = look_at(camera.Position, vec3(0.0f, 0.0f, 0.0f), camera.Up);
 	mat4 view = camera.GetViewMatrix();
 	mat4 projection = perspective(camera.Zoom, (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
-	//mat4 triangle_model = identity_mat4();
-	//vec4 triangle_colour = vec4(1.0f, 0.2f, 0.2f, 0.8f);
-
-	//triangleMesh.drawMesh(view, projection, triangle_model, triangle_colour);
-
-	mat4 pyramid_model = rotationMat;
-	vec4 pyramid_colour = vec4(1.0f, 0.2f, 0.2f, 1.0f);
-	vec4 light_colour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	vec4 light_position = vec4(5.0f, 5.0f, 5.0f, 0.0f);
+	mat4 model = identity_mat4();
 	vec4 view_position = vec4(camera.Position.v[0], camera.Position.v[1], camera.Position.v[2], 0.0f);
 
-	
-	pyramidMesh.drawLine(view, projection, pyramid_model, vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	//planeModel.drawModel(view, projection, model, vec4(0.0f, 0.0f, 0.0f, 0.0f), view_position);
+	//asteroid.drawMesh(view, projection, model, vec4(0.0f, 0.0f, 0.0f, 0.0f), view_position);
+	//sphereMesh.drawLine(view, projection, model, vec4(0.0f, 1.0f, 0.0f, 1.0f));
 
-	GLfloat line_vertices[] = {
-		point0.v[0], point0.v[1], point0.v[2],
-		closestPoint.v[0], closestPoint.v[1], closestPoint.v[2]
-	};
+	boundingBox.drawLine(view, projection, model, vec4(1.0f, 1.0f, 0.0f, 1.0f));
 
-	lineMesh = Mesh(&shaderProgramID[PARTICLE_SHADER]);
-	lineMesh.generateObjectBufferMesh(line_vertices, 2);
-
-	mat4 line_model = identity_mat4();
-	vec4 line_colour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	lineMesh.drawLine(view, projection, line_model, line_colour);
-	
-	mat4 point_model = identity_mat4();
-	point_model = scale(point_model, vec3(0.03f, 0.03f, 0.03f));
-	point_model = translate(point_model, point0);
-	vec4 point_colour = vec4(0.2f, 1.0f, 0.2f, 0.8f);
-	pointMesh.drawMesh(view, projection, point_model, point_colour);
-
-	mat4 closest_model = identity_mat4();
-	closest_model = scale(closest_model, vec3(0.03f, 0.03f, 0.03f));
-	closest_model = translate(closest_model, closestPoint);
-	vec4 closest_colour = vec4(0.2f, 0.2f, 1.0f, 0.8f);
-	pointMesh.drawMesh(view, projection, closest_model, closest_colour);
-
-	if (featureType == 0)
+	for (GLuint i = 0; i < numRigidBodies; i++)
 	{
-		GLfloat vertex_array[] = {
-			p1.v[0], p1.v[1], p1.v[2]
-		};
-		vertexMesh = Mesh(&shaderProgramID[PARTICLE_SHADER]);
-		vertexMesh.generateObjectBufferMesh(vertex_array, 1);
-
-		mat4 vertex_model = identity_mat4();
-		vec4 vertex_colour = vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		glPointSize(20.0f);
-		vertexMesh.drawPoint(view, projection, vertex_model, vertex_colour);
-		glPointSize(1.0f);
+		rigidbodies[i].drawMesh(view, projection, view_position);
+		if (useBoundingSpheres)
+			rigidbodies[i].drawBoundingSphere(view, projection);
 	}
-	else if (featureType == 1)
-	{
-		GLfloat edge_array[] = {
-			p1.v[0], p1.v[1], p1.v[2],
-			p2.v[0], p2.v[1], p2.v[2]
-		};
-		edgeMesh = Mesh(&shaderProgramID[PARTICLE_SHADER]);
-		edgeMesh.generateObjectBufferMesh(edge_array, 2);
-
-		mat4 edge_model = identity_mat4();
-		vec4 edge_colour = vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		glLineWidth(10.0f);
-		edgeMesh.drawLine(view, projection, edge_model, edge_colour);
-		glLineWidth(1.0f);
-	}
-	else if (featureType == 2)
-	{
-		GLfloat face_array[] = {
-			p1.v[0], p1.v[1], p1.v[2],
-			p2.v[0], p2.v[1], p2.v[2],
-			p3.v[0], p3.v[1], p3.v[2]
-		};
-		faceMesh = Mesh(&shaderProgramID[PARTICLE_SHADER]);
-		faceMesh.generateObjectBufferMesh(face_array, 3);
-
-		mat4 face_model = identity_mat4();
-		//face_model = scale(face_model, vec3(1.001f, 1.001f, 1.001f));
-		vec4 face_colour = vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		faceMesh.drawMesh(view, projection, face_model, face_colour);
-	}
-
-	pyramidMesh.drawMesh(view, projection, pyramid_model, pyramid_colour/*, light_colour, light_position, view_position*/);
-
-	//skyboxMesh.drawSkybox(view, projection);
-
-	//mat4 objectModel = identity_mat4();
-	//objectModel = rigidBody.rotation * objectModel;
-	//objectModel = translate(objectModel, rigidBody.position);
-
-	//objectMesh.drawMesh(view, projection, objectModel);
-
 	
-
+	
+	
 	draw_text();
 	
 	glutSwapBuffers();
@@ -234,72 +154,163 @@ void processInput()
 	if (keys[GLUT_KEY_RIGHT])
 		camera.ProcessKeyboard(RIGHT, cameraSpeed);
 
-	if (keys['q'])
-		point0 += vec3(-0.001f, 0.0f, 0.0f);
-	if (keys['w'])
-		point0 += vec3(0.001f, 0.0f, 0.0f);
-	if (keys['a'])
-		point0 += vec3(0.0f, -0.001f, 0.0f);
-	if (keys['s'])
-		point0 += vec3(0.0f, 0.001f, 0.0f);
-	if (keys['z'])
-		point0 += vec3(0.0f, 0.0f, -0.001f);
-	if (keys['x'])
-		point0 += vec3(0.0f, 0.0f, 0.001f);
-
-	if (keys['1'])
-		point0 = point1 * 2;
-	if (keys['2'])
-		point0 = point2 * 2;
-	if (keys['3'])
-		point0 = point3 * 2;
-	if (keys['4'])
-		point0 = point4 * 2;
-	if (keys['5'])
-		point0 = vec3(0.0f, -2.0f, 2.0f);
-	if (keys['6'])
-		point0 = vec3(-2.0f, -2.0f, -2.0f);
-	if (keys['7'])
-		point0 = vec3(2.0f, -2.0f, -2.0f);
-	if (keys['8'])
-		point0 = vec3(0.0f, 1.0f, 2.0f);
-	if (keys['9'])
-		point0 = vec3(1.0f, 0.5f, -0.5f);
-	if (keys['0'])
-	{
-		point0 = vec3(0.0f, 0.0f, 0.0f);
-		orientation.q[0] = 0.0f;
-		orientation.q[1] = 0.0f;
-		orientation.q[2] = 1.0f;
-		orientation.q[3] = 0.0f;
-	}
-
-	/*if (keys['t'])
-		applyYaw(radians(-1.0f), rotationMat, upV, fV, rightV, orientation);
-	if (keys['y'])
-		applyYaw(radians(1.0f), rotationMat, upV, fV, rightV, orientation);
-	if (keys['g'])
-		applyRoll(radians(-1.0f), rotationMat, upV, fV, rightV, orientation);
-	if (keys['h'])
-		applyRoll(radians(1.0f), rotationMat, upV, fV, rightV, orientation);
-	if (keys['b'])
-		applyPitch(radians(-1.0f), rotationMat, upV, fV, rightV, orientation);
-	if (keys['n'])
-		applyPitch(radians(1.0f), rotationMat, upV, fV, rightV, orientation);*/
-
 	if (keys[(char)27])
 		exit(0);
+}
+
+void checkPlaneCollisions(RigidBody &rigidBody)
+{
+	if (pointToPlane(rigidBody.position, yAxis, (yAxis * -1.0f)) < rigidBody.boundingSphereRadius)
+	{
+		vec4 velocityNormal = yAxis * (dot(rigidBody.velocity, yAxis));
+		vec4 velocityTangent = rigidBody.velocity - velocityNormal;
+		rigidBody.linearMomentum = ((velocityTangent * (1 - friction)) - (velocityNormal * resilience)) * rigidBody.mass;
+		rigidBody.position -= yAxis * (2 * (dot((rigidBody.position - (yAxis * -1.0f) - vec4(0.0f, rigidBody.boundingSphereRadius, 0.0f, 0.0f)), yAxis)));
+	}
+	if (pointToPlane(rigidBody.position, (yAxis * -1), (yAxis * 1.0f)) < rigidBody.boundingSphereRadius)
+	{
+		vec4 velocityNormal = (yAxis * -1) * (dot(rigidBody.velocity, (yAxis * -1)));
+		vec4 velocityTangent = rigidBody.velocity - velocityNormal;
+		rigidBody.linearMomentum = ((velocityTangent * (1 - friction)) - (velocityNormal * resilience)) * rigidBody.mass;
+		rigidBody.position -= (yAxis * -1) * (2 * (dot((rigidBody.position - (yAxis * 1.0f) + vec4(0.0f, rigidBody.boundingSphereRadius, 0.0f, 0.0f)), (yAxis * -1))));
+	}
+	if (pointToPlane(rigidBody.position, xAxis, (xAxis * -1.0f)) < rigidBody.boundingSphereRadius)
+	{
+		vec4 velocityNormal = xAxis * (dot(rigidBody.velocity, xAxis));
+		vec4 velocityTangent = rigidBody.velocity - velocityNormal;
+		rigidBody.linearMomentum = ((velocityTangent * (1 - friction)) - (velocityNormal * resilience)) * rigidBody.mass;
+		rigidBody.position -= xAxis * (2 * (dot((rigidBody.position - (xAxis * -1.0f) - vec4(rigidBody.boundingSphereRadius, 0.0f, 0.0f, 0.0f)), xAxis)));
+	}
+	if (pointToPlane(rigidBody.position, (xAxis * -1), (xAxis * 1.0f)) < rigidBody.boundingSphereRadius)
+	{
+		vec4 velocityNormal = (xAxis * -1) * (dot(rigidBody.velocity, (xAxis * -1)));
+		vec4 velocityTangent = rigidBody.velocity - velocityNormal;
+		rigidBody.linearMomentum = ((velocityTangent * (1 - friction)) - (velocityNormal * resilience)) * rigidBody.mass;
+		rigidBody.position -= (xAxis * -1) * (2 * (dot((rigidBody.position - (xAxis * 1.0f) + vec4(rigidBody.boundingSphereRadius, 0.0f, 0.0f, 0.0f)), (xAxis * -1))));
+	}
+	if (pointToPlane(rigidBody.position, zAxis, (zAxis * -1.0f)) < rigidBody.boundingSphereRadius)
+	{
+		vec4 velocityNormal = zAxis * (dot(rigidBody.velocity, zAxis));
+		vec4 velocityTangent = rigidBody.velocity - velocityNormal;
+		rigidBody.linearMomentum = ((velocityTangent * (1 - friction)) - (velocityNormal * resilience)) * rigidBody.mass;
+		rigidBody.position -= zAxis * (2 * (dot((rigidBody.position - (zAxis * -1.0f) - vec4(0.0f, 0.0f, rigidBody.boundingSphereRadius, 0.0f)), zAxis)));
+	}
+	if (pointToPlane(rigidBody.position, (zAxis * -1), (zAxis * 1.0f)) < rigidBody.boundingSphereRadius)
+	{
+		vec4 velocityNormal = (zAxis * -1) * (dot(rigidBody.velocity, (zAxis * -1)));
+		vec4 velocityTangent = rigidBody.velocity - velocityNormal;
+		rigidBody.linearMomentum = ((velocityTangent * (1 - friction)) - (velocityNormal * resilience)) * rigidBody.mass;
+		rigidBody.position -= (zAxis * -1) * (2 * (dot((rigidBody.position - (zAxis * 1.0f) + vec4(0.0f, 0.0f, rigidBody.boundingSphereRadius, 0.0f)), (zAxis * -1))));
+	}
+}
+
+void updateRigidBodies()
+{
+	for (GLuint i = 0; i < numRigidBodies; i++)
+	{
+		RigidBody &rigidBody = rigidbodies[i];
+		// Might change this to user input
+		//computeForcesAndTorque();
+
+		//vec3 xdot = rigidBody.velocity;
+		rigidBody.position += rigidBody.velocity * deltaTime;
+
+		// Check for collision
+		checkPlaneCollisions(rigidBody);
+
+		versor omega;
+		omega.q[0] = 0.0f;
+		omega.q[1] = rigidBody.angularVelocity.v[0];
+		omega.q[2] = rigidBody.angularVelocity.v[1];
+		omega.q[3] = rigidBody.angularVelocity.v[2];
+
+		versor angularVelocityQuat;
+		float avMag = quatMagnitude(omega);
+		angularVelocityQuat.q[0] = cos((avMag * deltaTime) / 2);
+		if (avMag > 0)
+		{
+			angularVelocityQuat.q[1] = (rigidBody.angularVelocity.v[0] / avMag) * sin((avMag * deltaTime) / 2);
+			angularVelocityQuat.q[2] = (rigidBody.angularVelocity.v[1] / avMag) * sin((avMag * deltaTime) / 2);
+			angularVelocityQuat.q[3] = (rigidBody.angularVelocity.v[2] / avMag) * sin((avMag * deltaTime) / 2);
+		}
+		else
+		{
+			angularVelocityQuat.q[1] = 0.0f;
+			angularVelocityQuat.q[2] = 0.0f;
+			angularVelocityQuat.q[3] = 0.0f;
+		}
+
+		multiplyQuat(rigidBody.orientation, angularVelocityQuat, rigidBody.orientation);
+
+		rigidBody.linearMomentum += rigidBody.force * deltaTime;
+		rigidBody.angularMomentum += rigidBody.torque * deltaTime;
+
+		rigidBody.velocity = rigidBody.linearMomentum / rigidBody.mass;
+		rigidBody.rotation = quat_to_mat4(normalise(rigidBody.orientation));
+		rigidBody.Iinv = rigidBody.rotation * rigidBody.IbodyInv * transpose(rigidBody.rotation);
+		rigidBody.angularVelocity = rigidBody.Iinv * rigidBody.angularMomentum;
+
+		// Update all world points
+		for (int i = 0; i < rigidBody.numPoints; i++)
+		{
+			rigidBody.worldVertices[i] = (rigidBody.rotation * rigidBody.worldVertices[i]) + rigidBody.position;
+		}
+
+		// Reset the colliding with counter
+		rigidBody.collidingWith = 0;
+	}
+}
+
+void checkBoundingSphereCollisions()
+{
+	for (GLuint i = 0; i < numRigidBodies; i++)
+	{
+		RigidBody &rb1 = rigidbodies[i];
+
+		for (GLuint j = i + 1; j < numRigidBodies; j++)
+		{
+			RigidBody &rb2 = rigidbodies[j];
+
+			if (getDistance(rb1.position, rb2.position) <= (rb1.boundingSphereRadius + rb2.boundingSphereRadius))
+			{
+				rb1.collidingWith++;
+				rb2.collidingWith++;
+				rb1.boundingSphereColour = red;
+				rb2.boundingSphereColour = red;
+			}
+		}
+
+		if (rb1.collidingWith == 0)
+		{
+			rb1.boundingSphereColour = green;
+		}
+	}
 }
 
 void updateScene()
 {
 	processInput();
-	//closestPoint = closestPointOnTriangleVoronoi(point0, point1, point2, point3);
-	//closestPoint = closestPointOnPyramidVoronoi(point0, point1, point2, point3, point4);
-	closestPoint = closestPointOnPyramidVoronoi(point0, point1, point2, point3, point4, &p1, &p2, &p3, &featureType);
-	//updateRigidBody();
+
+	updateRigidBodies();
+	checkBoundingSphereCollisions();
 	// Draw the next frame
 	glutPostRedisplay();
+}
+
+void initialiseRigidBodies()
+{
+	for (GLuint i = 0; i < numRigidBodies; i++)
+	{
+		RigidBody &rigidBody = rigidbodies[i];
+		GLfloat randomX1 = ((rand() % 10) - 5) / 100000.0f;
+		GLfloat randomY1 = ((rand() % 10) - 5) / 100000.0f;
+		GLfloat randomZ1 = ((rand() % 10) - 5) / 100000.0f;
+		GLfloat randomX2 = ((rand() % 100) - 50) / 20000.0f;
+		GLfloat randomY2 = ((rand() % 100) - 50) / 20000.0f;
+		GLfloat randomZ2 = ((rand() % 100) - 50) / 20000.0f;
+		rigidBody.angularMomentum = vec4(randomX1, randomY1, randomZ1, 0.0f);
+		rigidBody.linearMomentum = vec4(randomX2, randomY2, randomZ2, 0.0f);
+	}
 }
 
 void init()
@@ -317,58 +328,49 @@ void init()
 		shaderProgramID[i] = CompileShaders(vertexShaderNames[i], fragmentShaderNames[i]);
 	}
 
-	orientation = quat_from_axis_deg(0.0f, rightV.v[0], rightV.v[1], rightV.v[2]);
-	rotationMat = quat_to_mat4(orientation);
-	applyYaw(0.0f, rotationMat, upV, fV, rightV, orientation);
 
-	//skyboxMesh = Mesh(&shaderProgramID[SKYBOX]);
-	//skyboxMesh.setupSkybox(skyboxTextureFiles);
+	GLfloat bounding_box_vertices[] = {
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, -1.0f, 1.0f,
+		1.0f, -1.0f, 1.0f,
 
-	//objectMesh = Mesh(&shaderProgramID[BASIC_TEXTURE_SHADER]);
-	//objectMesh.generateObjectBufferMesh(meshFiles[OBJECT_MESH]);
-	//objectMesh.loadTexture(textureFiles[OBJECT_TEXTURE]);
+		1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, 1.0f,
 
-	//rigidBody = RigidBody(objectMesh.vertex_count, objectMesh.vertex_positions);
+		-1.0f, -1.0f, 1.0f,
+		-1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, 1.0f, -1.0f,
 
-	GLfloat point_vertex[] = {
-		0.0f, 0.0f, 0.0f
+		-1.0f, 1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, 1.0f, -1.0f,
+		-1.0f, 1.0f, 1.0f
 	};
 
-	GLfloat triangle_vertices[] = {
-		point1.v[0], point1.v[1], point1.v[2],
-		point2.v[0], point2.v[1], point2.v[2],
-		point3.v[0], point3.v[1], point3.v[2]
-	};
+	boundingBox = Mesh(&shaderProgramID[BASIC_COLOUR_SHADER]);
+	boundingBox.generateObjectBufferMesh(bounding_box_vertices, 16);
 
-	GLfloat pyramid_vertices[] = {
-		point1.v[0], point1.v[1], point1.v[2],
-		point2.v[0], point2.v[1], point2.v[2],
-		point3.v[0], point3.v[1], point3.v[2],
+	//planeModel = Model(&shaderProgramID[LIGHT_TEXTURE_SHADER], meshFiles[PLANE_MESH], textureFiles[PLANE_TEXTURE]);
+	asteroid = Mesh(&shaderProgramID[LIGHT_TEXTURE_SHADER]);
+	asteroid.generateObjectBufferMesh(meshFiles[ASTEROID_MESH]);
+	asteroid.loadTexture(textureFiles[ASTEROID_TEXTURE]);
 
-		point1.v[0], point1.v[1], point1.v[2],
-		point4.v[0], point4.v[1], point4.v[2],
-		point3.v[0], point3.v[1], point3.v[2],
+	sphereMesh = Mesh(&shaderProgramID[BASIC_COLOUR_SHADER]);
+	sphereMesh.generateObjectBufferMesh(meshFiles[SPHERE_MESH]);
 
-		point4.v[0], point4.v[1], point4.v[2],
-		point2.v[0], point2.v[1], point2.v[2],
-		point3.v[0], point3.v[1], point3.v[2],
+	//RigidBody rigidBody = RigidBody(asteroid.vertex_count, asteroid.vertex_positions);
+	RigidBody rigidBody = RigidBody(asteroid, 0.2f);
+	rigidBody.addBoundingSphere(sphereMesh, green);
+	//rigidBody.scaleFactor = 0.2f;
 
-		point1.v[0], point1.v[1], point1.v[2],
-		point4.v[0], point4.v[1], point4.v[2],
-		point2.v[0], point2.v[1], point2.v[2]
-	};
+	for (GLuint i = 0; i < numRigidBodies; i++)
+		rigidbodies.push_back(rigidBody);
 
-	pointMesh = Mesh(&shaderProgramID[PARTICLE_SHADER]);
-	pointMesh.generateObjectBufferMesh(meshFiles[POINT_MESH]);
-
-	triangleMesh = Mesh(&shaderProgramID[PARTICLE_SHADER]);
-	triangleMesh.generateObjectBufferMesh(triangle_vertices, 3);
-
-	pyramidMesh = Mesh(&shaderProgramID[PARTICLE_SHADER]);
-	pyramidMesh.generateObjectBufferMesh(pyramid_vertices, 12);
-	//pyramidMesh.generateObjectBufferMesh(meshFiles[POINT_MESH]);
-	
-	//pointMesh.generateObjectBufferMesh(pointVertex, 1);
+	initialiseRigidBodies();
 }
 
 /*

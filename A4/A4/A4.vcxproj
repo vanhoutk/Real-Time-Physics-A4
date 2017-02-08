@@ -156,6 +156,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Distance.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="PlaneRotation.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="Shader_Functions.h" />

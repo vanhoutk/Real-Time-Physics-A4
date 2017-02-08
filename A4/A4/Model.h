@@ -26,7 +26,7 @@ class Model {
 public:
 	Model();
 	Model(GLuint* shaderID, const char* fileName, const char* texturePath);
-	void drawModel(mat4 view, mat4 projection, mat4 model, vec4 colour);
+	void drawModel(mat4 view, mat4 projection, mat4 model, vec4 colour, vec4 viewPosition);
 
 private:
 	GLuint shaderProgramID;
@@ -53,10 +53,10 @@ Model::Model(GLuint* shaderID, const char* fileName, const char* texturePath = "
 	this->loadModel(fileName);
 }
 
-void Model::drawModel(mat4 view, mat4 projection, mat4 model, vec4 colour = vec4(0.0f, 0.0f, 0.0f, 0.0f))
+void Model::drawModel(mat4 view, mat4 projection, mat4 model, vec4 colour = vec4(0.0f, 0.0f, 0.0f, 0.0f), vec4 viewPosition = vec4(0.0f, 0.0f, 0.0f, 0.0f))
 {
 	for (GLuint i = 0; i < this->meshes.size(); i++)
-		this->meshes[i].drawMesh(view, projection, model, colour);
+		this->meshes[i].drawMesh(view, projection, model, colour, viewPosition);
 }
 
 /*  Functions   */

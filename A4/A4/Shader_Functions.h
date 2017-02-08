@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <streambuf>
 
 #pragma once

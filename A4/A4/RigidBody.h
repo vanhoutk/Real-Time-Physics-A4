@@ -4,6 +4,7 @@
 #include <vector>	
 
 #include "Antons_maths_funcs.h"
+#include "Distance.h"
 
 class RigidBody {
 public:
@@ -35,9 +36,22 @@ public:
 	vector<vec4> bodyVertices;
 	vector<vec4> worldVertices;
 
+	Mesh rigidBodyMesh;
+	Mesh boundingSphere;
+	GLfloat boundingSphereRadius;
+	vec4 boundingSphereColour;
+	GLuint collidingWith;
+
+	GLfloat scaleFactor;
+
 	RigidBody();
+	RigidBody(Mesh rigidBodyMesh, GLfloat scaleFactor);
 	RigidBody(int vertex_count, vector<float> vertex_positions);
-	void RigidBody::computeMassInertia(bool bodyCoords);
+	void addBoundingSphere(Mesh boundingSphere, vec4 colour);
+	GLfloat calculateBoundingSphereRadius();
+	void computeMassInertia(bool bodyCoords);
+	void drawMesh(mat4 view, mat4 projection, vec4 viewPosition);
+	void drawBoundingSphere(mat4 view, mat4 projection);
 };
 
 RigidBody::RigidBody()
@@ -64,6 +78,53 @@ RigidBody::RigidBody()
 	this->velocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->angularVelocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->Iinv = identity_mat4();
+}
+
+RigidBody::RigidBody(Mesh rigidBodyMesh, GLfloat scaleFactor = 1.0f)
+{
+	this->rigidBodyMesh = rigidBodyMesh;
+	this->scaleFactor = scaleFactor;
+	int vertex_count = rigidBodyMesh.vertex_count;
+	vector<float> vertex_positions = rigidBodyMesh.vertex_positions;
+
+	// Mesh Information
+	this->bodyVertices.clear();
+	this->worldVertices.clear();
+
+	for (int i = 0; i < vertex_count; i++)
+	{
+		this->bodyVertices.push_back(vec4(vertex_positions[i * 3], vertex_positions[1 + i * 3], vertex_positions[2 + i * 3], 0.0f) * scaleFactor);
+		this->worldVertices.push_back(vec4(vertex_positions[i * 3], vertex_positions[1 + i * 3], vertex_positions[2 + i * 3], 0.0f) * scaleFactor);
+	}
+
+	sort(this->worldVertices.begin(), this->worldVertices.end());
+	this->worldVertices.erase(unique(this->worldVertices.begin(), this->worldVertices.end()), this->worldVertices.end());
+	this->numPoints = this->worldVertices.size();
+
+	this->numTriangles = vertex_count / 3;
+
+	// Constants
+	computeMassInertia(false);
+	this->IbodyInv = inverse(this->Ibody);
+
+	// State Variables
+	this->position = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	this->orientation.q[0] = 0.0f;
+	this->orientation.q[1] = 0.0f;
+	this->orientation.q[2] = 1.0f;
+	this->orientation.q[3] = 0.0f;
+	this->linearMomentum = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	this->angularMomentum = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	// Derived Quantities
+	this->rotation = quat_to_mat4(this->orientation);
+	this->Iinv = this->rotation * this->IbodyInv * transpose(this->rotation);
+	this->velocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	this->angularVelocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	// Computer Quantities
+	this->torque = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	this->force = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 RigidBody::RigidBody(int vertex_count, vector<float> vertex_positions)
@@ -106,6 +167,24 @@ RigidBody::RigidBody(int vertex_count, vector<float> vertex_positions)
 	// Computer Quantities
 	this->torque = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->force = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+}
+
+void RigidBody::addBoundingSphere(Mesh boundingSphere, vec4 colour)
+{
+	this->boundingSphere = boundingSphere;
+	this->boundingSphereColour = colour;
+	this->boundingSphereRadius = calculateBoundingSphereRadius();
+}
+
+GLfloat RigidBody::calculateBoundingSphereRadius()
+{
+	GLfloat max = 0.0f;
+	for (GLuint i = 0; i < this->numPoints; i++)
+	{
+		if (getDistance(this->worldVertices[i], this->bodyCOM) > max)
+			max = getDistance(this->worldVertices[i], this->bodyCOM);
+	}
+	return max;
 }
 
 // Adapted from:
@@ -298,6 +377,22 @@ void RigidBody::computeMassInertia(bool bodyCoords)
 		this->Ibody.m[14] = 0.0f;
 		this->Ibody.m[15] = 1.0f;
 	}
+}
+
+void RigidBody::drawMesh(mat4 view, mat4 projection, vec4 viewPosition)
+{
+	mat4 objectModel = scale(identity_mat4(), vec3(this->scaleFactor, this->scaleFactor, this->scaleFactor));
+	objectModel = this->rotation * objectModel;
+	objectModel = translate(objectModel, this->position);
+	rigidBodyMesh.drawMesh(view, projection, objectModel, vec4(0.0f, 0.0f, 0.0f, 0.0f), viewPosition);
+}
+
+void RigidBody::drawBoundingSphere(mat4 view, mat4 projection)
+{
+	mat4 objectModel = scale(identity_mat4(), vec3(this->boundingSphereRadius, this->boundingSphereRadius, this->boundingSphereRadius));
+	objectModel = this->rotation * objectModel;
+	objectModel = translate(objectModel, this->position);
+	boundingSphere.drawLine(view, projection, objectModel, this->boundingSphereColour);
 }
 
 

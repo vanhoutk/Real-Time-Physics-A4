@@ -26,6 +26,7 @@ using namespace std;
 class Mesh {
 public:
 	int vertex_count;
+	vector<float> vertex_positions;
 
 	Mesh();
 	Mesh(GLuint* shaderID);
@@ -55,7 +56,6 @@ private:
 
 	vector<float> normals;
 	vector<float> texture_coords;
-	vector<float> vertex_positions;
 };
 
 Mesh::Mesh()
@@ -152,7 +152,6 @@ bool Mesh::loadMesh(const char* fileName)
 			if (mesh->HasTextureCoords(0)) {
 				const aiVector3D* vt = &(mesh->mTextureCoords[0][v_i]);
 				//printf ("      vt %i (%f,%f)\n", v_i, vt->x, vt->y);
-				hasTexture = true;
 				texture_coords.push_back(vt->x);
 				texture_coords.push_back(vt->y);
 			}
@@ -182,7 +181,7 @@ void Mesh::generateObjectBufferMesh()
 	glBindBuffer(GL_ARRAY_BUFFER, normal_vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertex_count * 3 * sizeof(float), &normals[0], GL_STATIC_DRAW);
 	unsigned int texture_vbo = 0;
-	if (hasTexture)
+	if (texture_coords.size() > 0)
 	{
 		glGenBuffers(1, &texture_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, texture_vbo);
@@ -221,12 +220,9 @@ void Mesh::generateObjectBufferMesh(const char* fileName)
 	glBindBuffer(GL_ARRAY_BUFFER, normal_vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertex_count * 3 * sizeof(float), &normals[0], GL_STATIC_DRAW);
 	unsigned int texture_vbo = 0;
-	if (hasTexture)
-	{
-		glGenBuffers(1, &texture_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, texture_vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertex_count * 2 * sizeof(float), &texture_coords[0], GL_STATIC_DRAW);
-	}
+	glGenBuffers(1, &texture_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, texture_vbo);
+	glBufferData(GL_ARRAY_BUFFER, vertex_count * 2 * sizeof(float), &texture_coords[0], GL_STATIC_DRAW);
 
 	glGenVertexArrays(1, &meshVAO);
 	glBindVertexArray(meshVAO);
@@ -366,7 +362,6 @@ void Mesh::drawPoint(mat4 view, mat4 projection, mat4 model, vec4 colour = vec4(
 
 	glDrawArrays(GL_POINTS, 0, vertex_count);
 }
-
 
 void Mesh::setupSkybox(const char ** skyboxTextureFiles)
 {

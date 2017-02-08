@@ -13,6 +13,11 @@ float getDistance(vec3 p1, vec3 p2)
 	return sqrt(x_sq + y_sq + z_sq);
 }
 
+float getDistance(vec4 p1, vec4 p2)
+{
+	return getDistance(vec3(p1.v[0], p1.v[1], p1.v[2]), vec3(p2.v[0], p2.v[1], p2.v[2]));
+}
+
 float pointToPoint(vec3 p1, vec3 p2)
 {
 	return getDistance(p1, p2);

@@ -1,0 +1,16 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 08.02.2017 00:56:29
+
+newmtl Material__2
+	Ns 25.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.3059 0.3059 0.3059
+	Kd 0.3059 0.3059 0.3059
+	Ks 0.5941 0.5941 0.5941
+	Ke 0.0000 0.0000 0.0000
+	map_Ka E:\Users\Kris\Documents\College\Fifth Year OneDrive\OneDrive\Fifth Year - Computers\CS7057 - Real-Time Physics\Assignments\Code\Bowlin_Pin.zip\Bowlin_Pin_v2\Bowlin_Pin\PBA.TGA
+	map_Kd E:\Users\Kris\Documents\College\Fifth Year OneDrive\OneDrive\Fifth Year - Computers\CS7057 - Real-Time Physics\Assignments\Code\Bowlin_Pin.zip\Bowlin_Pin_v2\Bowlin_Pin\PBA.TGA
