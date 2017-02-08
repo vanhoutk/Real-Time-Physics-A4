@@ -39,9 +39,9 @@ using namespace std;
 
 bool firstMouse = true;
 bool keys[1024];
-bool useBoundingSpheres = true;
 Camera camera(vec3(0.0f, 0.0f, 4.0f));
 enum Meshes { PLANE_MESH, ASTEROID_MESH, SPHERE_MESH };
+enum Mode { BOUNDING_SPHERES, AABB };
 enum Shaders { SKYBOX, BASIC_COLOUR_SHADER, BASIC_TEXTURE_SHADER, LIGHT_SHADER, LIGHT_TEXTURE_SHADER };
 enum Textures { PLANE_TEXTURE, ASTEROID_TEXTURE };
 GLfloat cameraSpeed = 0.005f;
@@ -49,7 +49,8 @@ GLfloat deltaTime = 1.0f / 60.0f;
 GLfloat friction = 0.05f;
 GLfloat lastX = 400, lastY = 300;
 GLfloat resilience = 0.98f;
-GLuint numRigidBodies = 20;
+GLuint mode = AABB;
+GLuint numRigidBodies = 10;
 GLuint shaderProgramID[NUM_SHADERS];
 int screenWidth = 1000;
 int screenHeight = 800;
@@ -83,10 +84,12 @@ void draw_text()
 {
 	ostringstream typeOSS, numOSS;
 	string typeString, numString;
-	if (useBoundingSpheres)
+	if (mode == BOUNDING_SPHERES)
 		typeOSS << "Broad Phase Collision: Bounding Spheres";
+	else if (mode == AABB)
+		typeOSS << "Broad Phase Collision: AABB";
 	else
-		typeOSS << "Broad Phase Collision:";
+		typeOSS << "Broad Phase Collision: None";
 
 	numOSS <<"Number of rigid bodies: " << numRigidBodies;
 	//closestOSS << "Closest Point ( " << fixed << setprecision(3) << closestPoint.v[0] << ", " << closestPoint.v[1] << ", " << closestPoint.v[2] << " )";
@@ -132,11 +135,11 @@ void display()
 	for (GLuint i = 0; i < numRigidBodies; i++)
 	{
 		rigidbodies[i].drawMesh(view, projection, view_position);
-		if (useBoundingSpheres)
+		if (mode == BOUNDING_SPHERES)
 			rigidbodies[i].drawBoundingSphere(view, projection);
+		else if (mode == AABB)
+			rigidbodies[i].drawAABB(view, projection, &shaderProgramID[BASIC_COLOUR_SHADER]);
 	}
-	
-	
 	
 	draw_text();
 	
@@ -253,7 +256,34 @@ void updateRigidBodies()
 		// Update all world points
 		for (int i = 0; i < rigidBody.numPoints; i++)
 		{
-			rigidBody.worldVertices[i] = (rigidBody.rotation * rigidBody.worldVertices[i]) + rigidBody.position;
+			rigidBody.worldVertices[i] = (rigidBody.rotation * rigidBody.initialWorldVertices[i]) + rigidBody.position;
+		}
+
+		rigidBody.xMin = rigidBody.worldVertices[0].v[0];
+		rigidBody.xMax = rigidBody.worldVertices[0].v[0];
+		rigidBody.yMin = rigidBody.worldVertices[0].v[1];
+		rigidBody.yMax = rigidBody.worldVertices[0].v[1];
+		rigidBody.zMin = rigidBody.worldVertices[0].v[2];
+		rigidBody.zMax = rigidBody.worldVertices[0].v[2];
+
+		for (int i = 1; i < rigidBody.numPoints; i++)
+		{
+			vec4 vertex = rigidBody.worldVertices[i];
+
+			if (vertex.v[0] < rigidBody.xMin)
+				rigidBody.xMin = vertex.v[0];
+			else if (vertex.v[0] > rigidBody.xMax)
+				rigidBody.xMax = vertex.v[0];
+
+			if (vertex.v[1] < rigidBody.yMin)
+				rigidBody.yMin = vertex.v[1];
+			else if (vertex.v[1] > rigidBody.yMax)
+				rigidBody.yMax = vertex.v[1];
+
+			if (vertex.v[2] < rigidBody.zMin)
+				rigidBody.zMin = vertex.v[2];
+			else if (vertex.v[2] > rigidBody.zMax)
+				rigidBody.zMax = vertex.v[2];
 		}
 
 		// Reset the colliding with counter
@@ -292,7 +322,7 @@ void updateScene()
 	processInput();
 
 	updateRigidBodies();
-	checkBoundingSphereCollisions();
+	// checkBoundingSphereCollisions();
 	// Draw the next frame
 	glutPostRedisplay();
 }

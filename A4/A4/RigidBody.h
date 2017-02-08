@@ -34,13 +34,20 @@ public:
 	GLuint numTriangles;
 	GLuint numPoints;
 	vector<vec4> bodyVertices;
+	vector<vec4> initialWorldVertices;
 	vector<vec4> worldVertices;
 
 	Mesh rigidBodyMesh;
+
+	// Bounding Sphere Variables
 	Mesh boundingSphere;
 	GLfloat boundingSphereRadius;
 	vec4 boundingSphereColour;
 	GLuint collidingWith;
+
+	// AABB Variables
+	GLfloat xMin, xMax, yMin, yMax, zMin, zMax;
+	vec4 boundingBoxColour;
 
 	GLfloat scaleFactor;
 
@@ -52,6 +59,7 @@ public:
 	void computeMassInertia(bool bodyCoords);
 	void drawMesh(mat4 view, mat4 projection, vec4 viewPosition);
 	void drawBoundingSphere(mat4 view, mat4 projection);
+	void drawAABB(mat4 view, mat4 projection, GLuint* shaderID);
 };
 
 RigidBody::RigidBody()
@@ -78,6 +86,13 @@ RigidBody::RigidBody()
 	this->velocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->angularVelocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->Iinv = identity_mat4();
+
+	this->xMin = 0.0f;
+	this->xMax = 0.0f;
+	this->yMin = 0.0f;
+	this->yMax = 0.0f;
+	this->zMin = 0.0f;
+	this->zMax = 0.0f;
 }
 
 RigidBody::RigidBody(Mesh rigidBodyMesh, GLfloat scaleFactor = 1.0f)
@@ -89,17 +104,19 @@ RigidBody::RigidBody(Mesh rigidBodyMesh, GLfloat scaleFactor = 1.0f)
 
 	// Mesh Information
 	this->bodyVertices.clear();
+	this->initialWorldVertices.clear();
 	this->worldVertices.clear();
 
 	for (int i = 0; i < vertex_count; i++)
 	{
 		this->bodyVertices.push_back(vec4(vertex_positions[i * 3], vertex_positions[1 + i * 3], vertex_positions[2 + i * 3], 0.0f) * scaleFactor);
-		this->worldVertices.push_back(vec4(vertex_positions[i * 3], vertex_positions[1 + i * 3], vertex_positions[2 + i * 3], 0.0f) * scaleFactor);
+		this->initialWorldVertices.push_back(vec4(vertex_positions[i * 3], vertex_positions[1 + i * 3], vertex_positions[2 + i * 3], 0.0f) * scaleFactor);
 	}
 
-	sort(this->worldVertices.begin(), this->worldVertices.end());
-	this->worldVertices.erase(unique(this->worldVertices.begin(), this->worldVertices.end()), this->worldVertices.end());
-	this->numPoints = this->worldVertices.size();
+	sort(this->initialWorldVertices.begin(), this->initialWorldVertices.end());
+	this->initialWorldVertices.erase(unique(this->initialWorldVertices.begin(), this->initialWorldVertices.end()), this->initialWorldVertices.end());
+	this->numPoints = this->initialWorldVertices.size();
+	this->worldVertices = this->initialWorldVertices;
 
 	this->numTriangles = vertex_count / 3;
 
@@ -125,6 +142,13 @@ RigidBody::RigidBody(Mesh rigidBodyMesh, GLfloat scaleFactor = 1.0f)
 	// Computer Quantities
 	this->torque = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->force = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	this->xMin = 0.0f;
+	this->xMax = 0.0f;
+	this->yMin = 0.0f;
+	this->yMax = 0.0f;
+	this->zMin = 0.0f;
+	this->zMax = 0.0f;
 }
 
 RigidBody::RigidBody(int vertex_count, vector<float> vertex_positions)
@@ -167,6 +191,13 @@ RigidBody::RigidBody(int vertex_count, vector<float> vertex_positions)
 	// Computer Quantities
 	this->torque = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->force = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	this->xMin = 0.0f;
+	this->xMax = 0.0f;
+	this->yMin = 0.0f;
+	this->yMax = 0.0f;
+	this->zMin = 0.0f;
+	this->zMax = 0.0f;
 }
 
 void RigidBody::addBoundingSphere(Mesh boundingSphere, vec4 colour)
@@ -393,6 +424,39 @@ void RigidBody::drawBoundingSphere(mat4 view, mat4 projection)
 	objectModel = this->rotation * objectModel;
 	objectModel = translate(objectModel, this->position);
 	boundingSphere.drawLine(view, projection, objectModel, this->boundingSphereColour);
+}
+
+void RigidBody::drawAABB(mat4 view, mat4 projection, GLuint* shaderID)
+{
+	// TODO: Remove this
+	boundingBoxColour = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+
+	GLfloat bounding_box_vertices[] = {
+		xMax, yMax, zMax,
+		xMin, yMax, zMax,
+		xMin, yMin, zMax,
+		xMax, yMin, zMax,
+
+		xMax, yMax, zMax,
+		xMax, yMax, zMin,
+		xMax, yMin, zMin,
+		xMax, yMin, zMax,
+
+		xMin, yMin, zMax,
+		xMin, yMin, zMin,
+		xMax, yMin, zMin,
+		xMax, yMax, zMin,
+
+		xMin, yMax, zMin,
+		xMin, yMin, zMin,
+		xMin, yMax, zMin,
+		xMin, yMax, zMax
+	};
+
+	Mesh bounding_box = Mesh(shaderID);
+	bounding_box.generateObjectBufferMesh(bounding_box_vertices, 16);
+	bounding_box.drawLine(view, projection, identity_mat4(), boundingBoxColour);
 }
 
 
