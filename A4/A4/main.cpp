@@ -1,6 +1,7 @@
 /*
  *	Includes
  */
+#include <algorithm>
 #include <assimp/cimport.h>		// C importer
 #include <assimp/scene.h>		// Collects data
 #include <assimp/postprocess.h> // Various extra operations
@@ -220,10 +221,19 @@ void checkPlaneCollisions(RigidBody &rigidBody)
 	}
 }
 
+bool endpoint_sort(const EndPoint& lhs, const EndPoint& rhs)
+{
+	return lhs.value < rhs.value;
+}
+
 void sortEndpointArrays()
 {
+	sort(begin(xAxisEndpoints), end(xAxisEndpoints), endpoint_sort);
+	sort(begin(yAxisEndpoints), end(yAxisEndpoints), endpoint_sort);
+	sort(begin(zAxisEndpoints), end(zAxisEndpoints), endpoint_sort);
+
 	// Sort the x axis endpoints
-	for (int i = 1; i <= sizeof(xAxisEndpoints); i++)
+	/*for (int i = 1; i < numRigidBodies * 2; i++)
 	{
 		EndPoint x = xAxisEndpoints[i];
 		int j = i - 1;
@@ -236,7 +246,7 @@ void sortEndpointArrays()
 	}
 
 	// Sort the y axis endpoints
-	for (int i = 1; i <= sizeof(yAxisEndpoints); i++)
+	for (int i = 1; i < numRigidBodies * 2; i++)
 	{
 		EndPoint x = yAxisEndpoints[i];
 		int j = i - 1;
@@ -249,7 +259,7 @@ void sortEndpointArrays()
 	}
 
 	// Sort the z axis endpoints
-	for (int i = 1; i <= sizeof(zAxisEndpoints); i++)
+	for (int i = 1; i < numRigidBodies * 2; i++)
 	{
 		EndPoint x = zAxisEndpoints[i];
 		int j = i - 1;
@@ -259,10 +269,10 @@ void sortEndpointArrays()
 			j--;
 		}
 		zAxisEndpoints[j + 1] = x;
-	}
+	}*/
 
 	// Update the indices of the rigidbodies
-	for (int i = 0; i < sizeof(xAxisEndpoints); i++)
+	for (int i = 0; i < numRigidBodies * 2; i++)
 	{
 		if (xAxisEndpoints[i].start)
 			rigidbodies[xAxisEndpoints[i].rigidBodyID].xMinI = i;
@@ -407,19 +417,22 @@ void checkAABBCollisions()
 {
 	// TODO: Move into sorting algorithm
 
+	queue<int> xActiveList;
+	queue<int> yActiveList;
+	queue<int> zActiveList;
+
 	// Check x axis overlaps
-	for (int i = 0; i < sizeof(xAxisEndpoints); i++)
+	for (int i = 0; i < numRigidBodies * 2; i++)
 	{
-		queue<int> xActiveList;
 		if (xAxisEndpoints[i].start)
 		{
 			xActiveList.push(xAxisEndpoints[i].rigidBodyID);
 
 			if (xActiveList.size() > 1)
 			{
-				for (int j = 0; j < xActiveList.size(); j++)
+				for (int j = 0; j < xActiveList.size() - 1; j++)
 				{
-					for (int k = j + 1; j < xActiveList.size(); k++)
+					for (int k = j + 1; k < xActiveList.size() - 1; k++)
 					{
 						collisionCounts[j][k] = 1;
 					}
@@ -439,18 +452,17 @@ void checkAABBCollisions()
 	}
 
 	// Check y axis overlaps
-	for (int i = 0; i < sizeof(yAxisEndpoints); i++)
+	for (int i = 0; i < numRigidBodies * 2; i++)
 	{
-		queue<int> yActiveList;
 		if (yAxisEndpoints[i].start)
 		{
 			yActiveList.push(yAxisEndpoints[i].rigidBodyID);
 
 			if (yActiveList.size() > 1)
 			{
-				for (int j = 0; j < yActiveList.size(); j++)
+				for (int j = 0; j < yActiveList.size() - 1; j++)
 				{
-					for (int k = j + 1; j < yActiveList.size(); k++)
+					for (int k = j + 1; k < yActiveList.size() - 1; k++)
 					{
 						if(collisionCounts[j][k] == 1)
 							collisionCounts[j][k] = 2;
@@ -471,18 +483,17 @@ void checkAABBCollisions()
 	}
 
 	// Check z axis overlaps
-	for (int i = 0; i < sizeof(zAxisEndpoints); i++)
+	for (int i = 0; i < numRigidBodies * 2; i++)
 	{
-		queue<int> zActiveList;
 		if (zAxisEndpoints[i].start)
 		{
 			zActiveList.push(zAxisEndpoints[i].rigidBodyID);
 
 			if (zActiveList.size() > 1)
 			{
-				for (int j = 0; j < zActiveList.size(); j++)
+				for (int j = 0; j < zActiveList.size() - 1; j++)
 				{
-					for (int k = j + 1; j < zActiveList.size(); k++)
+					for (int k = j + 1; k < zActiveList.size() - 1; k++)
 					{
 						if(collisionCounts[j][k] == 2)
 							collisionCounts[j][k] = 3;
@@ -513,6 +524,8 @@ void checkAABBCollisions()
 				rigidbodies[i].collisionAABB = true;
 				rigidbodies[j].collisionAABB = true;
 			}
+
+			collisionCounts[i][j] = 0;
 		}
 
 		if (!rigidbodies[i].collisionAABB)
@@ -550,6 +563,13 @@ void initialiseRigidBodies()
 		GLfloat randomZ2 = ((rand() % 100) - 50) / 20000.0f;
 		rigidBody.angularMomentum = vec4(randomX1, randomY1, randomZ1, 0.0f);
 		rigidBody.linearMomentum = vec4(randomX2, randomY2, randomZ2, 0.0f);
+
+		rigidBody.xMinI = 2 * i;
+		rigidBody.xMaxI = (2 * i) + 1;
+		rigidBody.yMinI = 2 * i;
+		rigidBody.yMaxI = (2 * i) + 1;
+		rigidBody.zMinI = 2 * i;
+		rigidBody.zMaxI = (2 * i) + 1;
 	}
 }
 

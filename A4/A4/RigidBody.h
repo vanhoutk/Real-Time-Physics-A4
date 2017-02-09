@@ -436,10 +436,6 @@ void RigidBody::drawBoundingSphere(mat4 view, mat4 projection)
 
 void RigidBody::drawAABB(mat4 view, mat4 projection, GLuint* shaderID)
 {
-	// TODO: Remove this
-	boundingBoxColour = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-
-
 	GLfloat bounding_box_vertices[] = {
 		xMax, yMax, zMax,
 		xMin, yMax, zMax,
