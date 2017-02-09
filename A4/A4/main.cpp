@@ -64,6 +64,9 @@ vec4 green = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 vec4 yAxis = vec4(0.0f, 1.0f, 0.0f, 0.0f);
 vec4 xAxis = vec4(1.0f, 0.0f, 0.0f, 0.0f);
 vec4 zAxis = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+vector<int> xActiveList;
+vector<int> yActiveList;
+vector<int> zActiveList;
 vector<RigidBody> rigidbodies;
 
 // | Resource Locations
@@ -415,26 +418,28 @@ void checkBoundingSphereCollisions()
 
 void checkAABBCollisions()
 {
-	// TODO: Move into sorting algorithm
-
-	queue<int> xActiveList;
-	queue<int> yActiveList;
-	queue<int> zActiveList;
+	xActiveList.clear();
+	yActiveList.clear();
+	zActiveList.clear();
 
 	// Check x axis overlaps
 	for (int i = 0; i < numRigidBodies * 2; i++)
 	{
 		if (xAxisEndpoints[i].start)
 		{
-			xActiveList.push(xAxisEndpoints[i].rigidBodyID);
+			xActiveList.push_back(xAxisEndpoints[i].rigidBodyID);
 
 			if (xActiveList.size() > 1)
 			{
 				for (int j = 0; j < xActiveList.size() - 1; j++)
 				{
-					for (int k = j + 1; k < xActiveList.size() - 1; k++)
+					for (int k = j + 1; k < xActiveList.size(); k++)
 					{
-						collisionCounts[j][k] = 1;
+						if(xActiveList[j] < xActiveList[k])
+							collisionCounts[xActiveList[j]][xActiveList[k]] = 1;
+						else
+							collisionCounts[xActiveList[k]][xActiveList[j]] = 1;
+						//collisionCounts[j][k] = 1;
 					}
 				}
 			}
@@ -444,10 +449,13 @@ void checkAABBCollisions()
 			while (xActiveList.front() != xAxisEndpoints[i].rigidBodyID)
 			{
 				int x = xActiveList.front();
-				xActiveList.pop();
-				xActiveList.push(x);
+				xActiveList.erase(xActiveList.begin());
+				xActiveList.push_back(x);
+				//xActiveList.pop();
+				//xActiveList.push(x);
 			}
-			xActiveList.pop();
+			xActiveList.erase(xActiveList.begin());
+			//xActiveList.pop();
 		}
 	}
 
@@ -456,16 +464,26 @@ void checkAABBCollisions()
 	{
 		if (yAxisEndpoints[i].start)
 		{
-			yActiveList.push(yAxisEndpoints[i].rigidBodyID);
+			yActiveList.push_back(yAxisEndpoints[i].rigidBodyID);
 
 			if (yActiveList.size() > 1)
 			{
 				for (int j = 0; j < yActiveList.size() - 1; j++)
 				{
-					for (int k = j + 1; k < yActiveList.size() - 1; k++)
+					for (int k = j + 1; k < yActiveList.size(); k++)
 					{
-						if(collisionCounts[j][k] == 1)
-							collisionCounts[j][k] = 2;
+						//if(collisionCounts[j][k] == 1)
+						//	collisionCounts[j][k] = 2;
+						if (yActiveList[j] < yActiveList[k])
+						{
+							if (collisionCounts[yActiveList[j]][yActiveList[k]] == 1)
+								collisionCounts[yActiveList[j]][yActiveList[k]] = 2;
+						}
+						else
+						{
+							if (collisionCounts[yActiveList[k]][yActiveList[j]] == 1)
+								collisionCounts[yActiveList[k]][yActiveList[j]] = 2;
+						}
 					}
 				}
 			}
@@ -474,11 +492,13 @@ void checkAABBCollisions()
 		{
 			while (yActiveList.front() != yAxisEndpoints[i].rigidBodyID)
 			{
-				int x = yActiveList.front();
-				yActiveList.pop();
-				yActiveList.push(x);
+				int y = yActiveList.front();
+				yActiveList.erase(yActiveList.begin());
+				yActiveList.push_back(y);
+				//yActiveList.pop();
+				//yActiveList.push(x);
 			}
-			yActiveList.pop();
+			yActiveList.erase(yActiveList.begin());
 		}
 	}
 
@@ -487,16 +507,25 @@ void checkAABBCollisions()
 	{
 		if (zAxisEndpoints[i].start)
 		{
-			zActiveList.push(zAxisEndpoints[i].rigidBodyID);
+			zActiveList.push_back(zAxisEndpoints[i].rigidBodyID);
 
 			if (zActiveList.size() > 1)
 			{
 				for (int j = 0; j < zActiveList.size() - 1; j++)
 				{
-					for (int k = j + 1; k < zActiveList.size() - 1; k++)
+					for (int k = j + 1; k < zActiveList.size(); k++)
 					{
-						if(collisionCounts[j][k] == 2)
-							collisionCounts[j][k] = 3;
+						if (zActiveList[j] < zActiveList[k])
+						{
+							if (collisionCounts[zActiveList[j]][zActiveList[k]] == 2)
+								collisionCounts[zActiveList[j]][zActiveList[k]] = 3;
+						}
+						else
+						{
+							if (collisionCounts[zActiveList[k]][zActiveList[j]] == 2)
+								collisionCounts[zActiveList[k]][zActiveList[j]] = 3;
+						}
+						
 					}
 				}
 			}
@@ -505,11 +534,14 @@ void checkAABBCollisions()
 		{
 			while (zActiveList.front() != zAxisEndpoints[i].rigidBodyID)
 			{
-				int x = zActiveList.front();
-				zActiveList.pop();
-				zActiveList.push(x);
+				int z = zActiveList.front();
+				zActiveList.erase(zActiveList.begin());
+				zActiveList.push_back(z);
+				//zActiveList.pop();
+				//zActiveList.push(x);
 			}
-			zActiveList.pop();
+			zActiveList.erase(zActiveList.begin());
+			//zActiveList.pop();
 		}
 	}
 

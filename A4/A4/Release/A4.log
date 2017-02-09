@@ -15,22 +15,22 @@ e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - comput
 e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(287): warning C4305: 'initializing': truncation from 'double' to 'float'
 e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(288): warning C4305: 'initializing': truncation from 'double' to 'float'
 e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(295): warning C4018: '<': signed/unsigned mismatch
-main.cpp(331): warning C4018: '<': signed/unsigned mismatch
-main.cpp(345): warning C4018: '<': signed/unsigned mismatch
-main.cpp(420): warning C4018: '<': signed/unsigned mismatch
-main.cpp(422): warning C4018: '<': signed/unsigned mismatch
-main.cpp(451): warning C4018: '<': signed/unsigned mismatch
-main.cpp(453): warning C4018: '<': signed/unsigned mismatch
-main.cpp(483): warning C4018: '<': signed/unsigned mismatch
-main.cpp(485): warning C4018: '<': signed/unsigned mismatch
-main.cpp(647): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(648): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(655): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(656): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(670): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+main.cpp(344): warning C4018: '<': signed/unsigned mismatch
+main.cpp(358): warning C4018: '<': signed/unsigned mismatch
+main.cpp(432): warning C4018: '<': signed/unsigned mismatch
+main.cpp(434): warning C4018: '<': signed/unsigned mismatch
+main.cpp(469): warning C4018: '<': signed/unsigned mismatch
+main.cpp(471): warning C4018: '<': signed/unsigned mismatch
+main.cpp(512): warning C4018: '<': signed/unsigned mismatch
+main.cpp(514): warning C4018: '<': signed/unsigned mismatch
+main.cpp(697): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+main.cpp(698): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+main.cpp(705): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+main.cpp(706): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+main.cpp(720): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
   Generating code
-  165 of 925 functions (17.8%) were compiled, the rest were copied from previous compilation.
-    114 functions were new in current compilation
-    41 functions had inline decision re-evaluated but remain unchanged
+  85 of 926 functions ( 9.2%) were compiled, the rest were copied from previous compilation.
+    6 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   A4.vcxproj -> E:\Users\Kris\Documents\College\Fifth Year OneDrive\OneDrive\Fifth Year - Computers\CS7057 - Real-Time Physics\Assignments\Code\Real-Time-Physics-A4\A4\Release\A4.exe
