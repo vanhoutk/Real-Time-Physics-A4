@@ -10,6 +10,7 @@
 #include <iostream>
 #include <math.h>
 #include <mmsystem.h>
+#include <queue>
 #include <sstream>
 #include <stdio.h>
 #include <vector>				// STL dynamic memory
@@ -50,7 +51,7 @@ GLfloat friction = 0.05f;
 GLfloat lastX = 400, lastY = 300;
 GLfloat resilience = 0.98f;
 GLuint mode = AABB;
-GLuint numRigidBodies = 10;
+const GLuint numRigidBodies = 10;
 GLuint shaderProgramID[NUM_SHADERS];
 int screenWidth = 1000;
 int screenHeight = 800;
@@ -71,6 +72,18 @@ const char * textureFiles[NUM_TEXTURES] = { "../Textures/plane.jpg", "../Texture
 
 const char * vertexShaderNames[NUM_SHADERS] = { "../Shaders/SkyboxVertexShader.txt", "../Shaders/ParticleVertexShader.txt", "../Shaders/BasicTextureVertexShader.txt", "../Shaders/LightVertexShader.txt", "../Shaders/LightTextureVertexShader.txt" };
 const char * fragmentShaderNames[NUM_SHADERS] = { "../Shaders/SkyboxFragmentShader.txt", "../Shaders/ParticleFragmentShader.txt", "../Shaders/BasicTextureFragmentShader.txt", "../Shaders/LightFragmentShader.txt", "../Shaders/LightTextureFragmentShader.txt" };
+
+struct EndPoint {
+	GLuint rigidBodyID;
+	GLfloat value;
+	bool start;
+};
+
+EndPoint xAxisEndpoints[numRigidBodies * 2];
+EndPoint yAxisEndpoints[numRigidBodies * 2];
+EndPoint zAxisEndpoints[numRigidBodies * 2];
+
+int collisionCounts[numRigidBodies][numRigidBodies];
 
 string frf(const float &f)
 {
@@ -207,6 +220,67 @@ void checkPlaneCollisions(RigidBody &rigidBody)
 	}
 }
 
+void sortEndpointArrays()
+{
+	// Sort the x axis endpoints
+	for (int i = 1; i <= sizeof(xAxisEndpoints); i++)
+	{
+		EndPoint x = xAxisEndpoints[i];
+		int j = i - 1;
+		while (j >= 0 && xAxisEndpoints[j].value > x.value)
+		{
+			xAxisEndpoints[j + 1] = xAxisEndpoints[j];
+			j--;
+		}
+		xAxisEndpoints[j + 1] = x;
+	}
+
+	// Sort the y axis endpoints
+	for (int i = 1; i <= sizeof(yAxisEndpoints); i++)
+	{
+		EndPoint x = yAxisEndpoints[i];
+		int j = i - 1;
+		while (j >= 0 && yAxisEndpoints[j].value > x.value)
+		{
+			yAxisEndpoints[j + 1] = yAxisEndpoints[j];
+			j--;
+		}
+		yAxisEndpoints[j + 1] = x;
+	}
+
+	// Sort the z axis endpoints
+	for (int i = 1; i <= sizeof(zAxisEndpoints); i++)
+	{
+		EndPoint x = zAxisEndpoints[i];
+		int j = i - 1;
+		while (j >= 0 && zAxisEndpoints[j].value > x.value)
+		{
+			zAxisEndpoints[j + 1] = zAxisEndpoints[j];
+			j--;
+		}
+		zAxisEndpoints[j + 1] = x;
+	}
+
+	// Update the indices of the rigidbodies
+	for (int i = 0; i < sizeof(xAxisEndpoints); i++)
+	{
+		if (xAxisEndpoints[i].start)
+			rigidbodies[xAxisEndpoints[i].rigidBodyID].xMinI = i;
+		else
+			rigidbodies[xAxisEndpoints[i].rigidBodyID].xMaxI = i;
+
+		if (yAxisEndpoints[i].start)
+			rigidbodies[yAxisEndpoints[i].rigidBodyID].yMinI = i;
+		else
+			rigidbodies[yAxisEndpoints[i].rigidBodyID].yMaxI = i;
+
+		if (zAxisEndpoints[i].start)
+			rigidbodies[zAxisEndpoints[i].rigidBodyID].zMinI = i;
+		else
+			rigidbodies[zAxisEndpoints[i].rigidBodyID].zMaxI = i;
+	}
+}
+
 void updateRigidBodies()
 {
 	for (GLuint i = 0; i < numRigidBodies; i++)
@@ -259,36 +333,48 @@ void updateRigidBodies()
 			rigidBody.worldVertices[i] = (rigidBody.rotation * rigidBody.initialWorldVertices[i]) + rigidBody.position;
 		}
 
-		rigidBody.xMin = rigidBody.worldVertices[0].v[0];
-		rigidBody.xMax = rigidBody.worldVertices[0].v[0];
-		rigidBody.yMin = rigidBody.worldVertices[0].v[1];
-		rigidBody.yMax = rigidBody.worldVertices[0].v[1];
-		rigidBody.zMin = rigidBody.worldVertices[0].v[2];
-		rigidBody.zMax = rigidBody.worldVertices[0].v[2];
-
-		for (int i = 1; i < rigidBody.numPoints; i++)
+		if (mode == AABB)
 		{
-			vec4 vertex = rigidBody.worldVertices[i];
+			rigidBody.xMin = rigidBody.worldVertices[0].v[0];
+			rigidBody.xMax = rigidBody.worldVertices[0].v[0];
+			rigidBody.yMin = rigidBody.worldVertices[0].v[1];
+			rigidBody.yMax = rigidBody.worldVertices[0].v[1];
+			rigidBody.zMin = rigidBody.worldVertices[0].v[2];
+			rigidBody.zMax = rigidBody.worldVertices[0].v[2];
 
-			if (vertex.v[0] < rigidBody.xMin)
-				rigidBody.xMin = vertex.v[0];
-			else if (vertex.v[0] > rigidBody.xMax)
-				rigidBody.xMax = vertex.v[0];
+			for (int i = 1; i < rigidBody.numPoints; i++)
+			{
+				vec4 vertex = rigidBody.worldVertices[i];
 
-			if (vertex.v[1] < rigidBody.yMin)
-				rigidBody.yMin = vertex.v[1];
-			else if (vertex.v[1] > rigidBody.yMax)
-				rigidBody.yMax = vertex.v[1];
+				if (vertex.v[0] < rigidBody.xMin)
+					rigidBody.xMin = vertex.v[0];
+				else if (vertex.v[0] > rigidBody.xMax)
+					rigidBody.xMax = vertex.v[0];
 
-			if (vertex.v[2] < rigidBody.zMin)
-				rigidBody.zMin = vertex.v[2];
-			else if (vertex.v[2] > rigidBody.zMax)
-				rigidBody.zMax = vertex.v[2];
+				if (vertex.v[1] < rigidBody.yMin)
+					rigidBody.yMin = vertex.v[1];
+				else if (vertex.v[1] > rigidBody.yMax)
+					rigidBody.yMax = vertex.v[1];
+
+				if (vertex.v[2] < rigidBody.zMin)
+					rigidBody.zMin = vertex.v[2];
+				else if (vertex.v[2] > rigidBody.zMax)
+					rigidBody.zMax = vertex.v[2];
+			}
+
+			xAxisEndpoints[rigidBody.xMinI] = EndPoint{ i, rigidBody.xMin, true };
+			xAxisEndpoints[rigidBody.xMaxI] = EndPoint{ i, rigidBody.xMax, false };
+			yAxisEndpoints[rigidBody.yMinI] = EndPoint{ i, rigidBody.yMin, true };
+			yAxisEndpoints[rigidBody.yMaxI] = EndPoint{ i, rigidBody.yMax, false };
+			zAxisEndpoints[rigidBody.zMinI] = EndPoint{ i, rigidBody.zMin, true };
+			zAxisEndpoints[rigidBody.zMaxI] = EndPoint{ i, rigidBody.zMax, false };
 		}
 
 		// Reset the colliding with counter
 		rigidBody.collidingWith = 0;
 	}
+
+	sortEndpointArrays();
 }
 
 void checkBoundingSphereCollisions()
@@ -317,12 +403,136 @@ void checkBoundingSphereCollisions()
 	}
 }
 
+void checkAABBCollisions()
+{
+	// TODO: Move into sorting algorithm
+
+	// Check x axis overlaps
+	for (int i = 0; i < sizeof(xAxisEndpoints); i++)
+	{
+		queue<int> xActiveList;
+		if (xAxisEndpoints[i].start)
+		{
+			xActiveList.push(xAxisEndpoints[i].rigidBodyID);
+
+			if (xActiveList.size() > 1)
+			{
+				for (int j = 0; j < xActiveList.size(); j++)
+				{
+					for (int k = j + 1; j < xActiveList.size(); k++)
+					{
+						collisionCounts[j][k] = 1;
+					}
+				}
+			}
+		}
+		else
+		{
+			while (xActiveList.front() != xAxisEndpoints[i].rigidBodyID)
+			{
+				int x = xActiveList.front();
+				xActiveList.pop();
+				xActiveList.push(x);
+			}
+			xActiveList.pop();
+		}
+	}
+
+	// Check y axis overlaps
+	for (int i = 0; i < sizeof(yAxisEndpoints); i++)
+	{
+		queue<int> yActiveList;
+		if (yAxisEndpoints[i].start)
+		{
+			yActiveList.push(yAxisEndpoints[i].rigidBodyID);
+
+			if (yActiveList.size() > 1)
+			{
+				for (int j = 0; j < yActiveList.size(); j++)
+				{
+					for (int k = j + 1; j < yActiveList.size(); k++)
+					{
+						if(collisionCounts[j][k] == 1)
+							collisionCounts[j][k] = 2;
+					}
+				}
+			}
+		}
+		else
+		{
+			while (yActiveList.front() != yAxisEndpoints[i].rigidBodyID)
+			{
+				int x = yActiveList.front();
+				yActiveList.pop();
+				yActiveList.push(x);
+			}
+			yActiveList.pop();
+		}
+	}
+
+	// Check z axis overlaps
+	for (int i = 0; i < sizeof(zAxisEndpoints); i++)
+	{
+		queue<int> zActiveList;
+		if (zAxisEndpoints[i].start)
+		{
+			zActiveList.push(zAxisEndpoints[i].rigidBodyID);
+
+			if (zActiveList.size() > 1)
+			{
+				for (int j = 0; j < zActiveList.size(); j++)
+				{
+					for (int k = j + 1; j < zActiveList.size(); k++)
+					{
+						if(collisionCounts[j][k] == 2)
+							collisionCounts[j][k] = 3;
+					}
+				}
+			}
+		}
+		else
+		{
+			while (zActiveList.front() != zAxisEndpoints[i].rigidBodyID)
+			{
+				int x = zActiveList.front();
+				zActiveList.pop();
+				zActiveList.push(x);
+			}
+			zActiveList.pop();
+		}
+	}
+
+	for (int i = 0; i < numRigidBodies; i++)
+	{
+		for (int j = i + 1; j < numRigidBodies; j++)
+		{
+			if (collisionCounts[i][j] == 3)
+			{
+				rigidbodies[i].boundingBoxColour = red;
+				rigidbodies[j].boundingBoxColour = red;
+				rigidbodies[i].collisionAABB = true;
+				rigidbodies[j].collisionAABB = true;
+			}
+		}
+
+		if (!rigidbodies[i].collisionAABB)
+			rigidbodies[i].boundingBoxColour = green;
+
+		// Reset the collision
+		rigidbodies[i].collisionAABB = false;
+	}
+}
+
 void updateScene()
 {
 	processInput();
 
 	updateRigidBodies();
-	// checkBoundingSphereCollisions();
+	
+	if (mode == BOUNDING_SPHERES)
+		checkBoundingSphereCollisions();
+	else if (mode == AABB)
+		checkAABBCollisions();
 	// Draw the next frame
 	glutPostRedisplay();
 }

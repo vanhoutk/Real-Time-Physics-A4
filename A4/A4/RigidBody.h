@@ -47,7 +47,9 @@ public:
 
 	// AABB Variables
 	GLfloat xMin, xMax, yMin, yMax, zMin, zMax;
+	GLuint xMinI, xMaxI, yMinI, yMaxI, zMinI, zMaxI; // Array indices
 	vec4 boundingBoxColour;
+	bool collisionAABB;
 
 	GLfloat scaleFactor;
 
@@ -93,6 +95,8 @@ RigidBody::RigidBody()
 	this->yMax = 0.0f;
 	this->zMin = 0.0f;
 	this->zMax = 0.0f;
+
+	this->collisionAABB = false;
 }
 
 RigidBody::RigidBody(Mesh rigidBodyMesh, GLfloat scaleFactor = 1.0f)
@@ -139,7 +143,7 @@ RigidBody::RigidBody(Mesh rigidBodyMesh, GLfloat scaleFactor = 1.0f)
 	this->velocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->angularVelocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	// Computer Quantities
+	// Computed Quantities
 	this->torque = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->force = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -149,6 +153,8 @@ RigidBody::RigidBody(Mesh rigidBodyMesh, GLfloat scaleFactor = 1.0f)
 	this->yMax = 0.0f;
 	this->zMin = 0.0f;
 	this->zMax = 0.0f;
+
+	this->collisionAABB = false;
 }
 
 RigidBody::RigidBody(int vertex_count, vector<float> vertex_positions)
@@ -188,7 +194,7 @@ RigidBody::RigidBody(int vertex_count, vector<float> vertex_positions)
 	this->velocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->angularVelocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	// Computer Quantities
+	// Computed Quantities
 	this->torque = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	this->force = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -198,6 +204,8 @@ RigidBody::RigidBody(int vertex_count, vector<float> vertex_positions)
 	this->yMax = 0.0f;
 	this->zMin = 0.0f;
 	this->zMax = 0.0f;
+
+	this->collisionAABB = false;
 }
 
 void RigidBody::addBoundingSphere(Mesh boundingSphere, vec4 colour)
