@@ -31,6 +31,9 @@ public:
 	Mesh();
 	Mesh(GLuint* shaderID);
 
+	~Mesh();
+	void dispose();
+
 	// Mesh Functions
 	bool loadMesh(aiMesh* mesh, const aiScene* scene);
 	bool loadMesh(const char* fileName);
@@ -67,6 +70,19 @@ Mesh::Mesh(GLuint* shaderID)
 {
 	hasTexture = false;
 	shaderProgramID = *shaderID;
+}
+
+Mesh::~Mesh()
+{
+}
+
+void Mesh::dispose()
+{
+	vertex_positions.clear();
+	normals.clear();
+	texture_coords.clear();
+
+	delete this;
 }
 
 bool Mesh::loadMesh(aiMesh* mesh, const aiScene* scene)

@@ -33,7 +33,7 @@ using namespace std;
 /*
  *	Globally defined variables and constants
  */
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))  // Macro for indexing vertex buffer
+//#define BUFFER_OFFSET(i) ((char *)NULL + (i))  // Macro for indexing vertex buffer
 
 #define NUM_MESHES   3
 #define NUM_SHADERS	 5
@@ -41,6 +41,7 @@ using namespace std;
 
 bool firstMouse = true;
 bool keys[1024];
+bool pause = false;
 Camera camera(vec3(0.0f, 0.0f, 4.0f));
 enum Meshes { PLANE_MESH, ASTEROID_MESH, SPHERE_MESH };
 enum Mode { BOUNDING_SPHERES, AABB };
@@ -173,6 +174,15 @@ void processInput()
 		camera.ProcessKeyboard(LEFT, cameraSpeed);
 	if (keys[GLUT_KEY_RIGHT])
 		camera.ProcessKeyboard(RIGHT, cameraSpeed);
+
+	if (keys['1'])
+		mode = BOUNDING_SPHERES;
+	if (keys['2'])
+		mode = AABB;
+	if (keys['p'])
+		pause = true;
+	if (keys['o'])
+		pause = false;
 
 	if (keys[(char)27])
 		exit(0);
@@ -572,12 +582,16 @@ void updateScene()
 {
 	processInput();
 
-	updateRigidBodies();
-	
-	if (mode == BOUNDING_SPHERES)
-		checkBoundingSphereCollisions();
-	else if (mode == AABB)
-		checkAABBCollisions();
+	if (!pause)
+	{
+		updateRigidBodies();
+
+		if (mode == BOUNDING_SPHERES)
+			checkBoundingSphereCollisions();
+		else if (mode == AABB)
+			checkAABBCollisions();
+	}
+
 	// Draw the next frame
 	glutPostRedisplay();
 }

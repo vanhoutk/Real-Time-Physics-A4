@@ -458,9 +458,14 @@ void RigidBody::drawAABB(mat4 view, mat4 projection, GLuint* shaderID)
 		xMin, yMax, zMax
 	};
 
-	Mesh bounding_box = Mesh(shaderID);
-	bounding_box.generateObjectBufferMesh(bounding_box_vertices, 16);
-	bounding_box.drawLine(view, projection, identity_mat4(), boundingBoxColour);
+	Mesh* bounding_box = new Mesh(shaderID);
+	bounding_box->generateObjectBufferMesh(bounding_box_vertices, 16);
+	bounding_box->drawLine(view, projection, identity_mat4(), boundingBoxColour);
+
+	//delete bounding_box;
+	bounding_box->dispose();
+
+	//delete bounding_box_vertices;
 }
 
 
