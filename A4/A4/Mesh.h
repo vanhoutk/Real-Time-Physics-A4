@@ -78,11 +78,7 @@ Mesh::~Mesh()
 
 void Mesh::dispose()
 {
-	vertex_positions.clear();
-	normals.clear();
-	texture_coords.clear();
-
-	delete this;
+	glDeleteVertexArrays(1, &meshVAO);
 }
 
 bool Mesh::loadMesh(aiMesh* mesh, const aiScene* scene)
@@ -217,6 +213,10 @@ void Mesh::generateObjectBufferMesh()
 	glBindBuffer(GL_ARRAY_BUFFER, texture_vbo);
 	glVertexAttribPointer(loc3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindVertexArray(0);
+
+	glDeleteBuffers(1, &position_vbo);
+	glDeleteBuffers(1, &normal_vbo);
+	glDeleteBuffers(1, &texture_vbo);
 }
 
 void Mesh::generateObjectBufferMesh(const char* fileName)
@@ -253,6 +253,10 @@ void Mesh::generateObjectBufferMesh(const char* fileName)
 	glBindBuffer(GL_ARRAY_BUFFER, texture_vbo);
 	glVertexAttribPointer(loc3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindVertexArray(0);
+
+	glDeleteBuffers(1, &position_vbo);
+	glDeleteBuffers(1, &normal_vbo);
+	glDeleteBuffers(1, &texture_vbo);
 }
 
 void Mesh::generateObjectBufferMesh(GLfloat* vertices, int numVertices)
@@ -286,6 +290,9 @@ void Mesh::generateObjectBufferMesh(GLfloat* vertices, int numVertices)
 	glVertexAttribPointer(loc2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glBindVertexArray(0);
+
+	glDeleteBuffers(1, &position_vbo);
+	glDeleteBuffers(1, &normal_vbo);
 }
 
 bool Mesh::loadTexture(const char* fileName)

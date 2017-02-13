@@ -65,9 +65,6 @@ vec4 green = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 vec4 yAxis = vec4(0.0f, 1.0f, 0.0f, 0.0f);
 vec4 xAxis = vec4(1.0f, 0.0f, 0.0f, 0.0f);
 vec4 zAxis = vec4(0.0f, 0.0f, 1.0f, 0.0f);
-vector<int> xActiveList;
-vector<int> yActiveList;
-vector<int> zActiveList;
 vector<RigidBody> rigidbodies;
 
 // | Resource Locations
@@ -77,18 +74,6 @@ const char * textureFiles[NUM_TEXTURES] = { "../Textures/plane.jpg", "../Texture
 
 const char * vertexShaderNames[NUM_SHADERS] = { "../Shaders/SkyboxVertexShader.txt", "../Shaders/ParticleVertexShader.txt", "../Shaders/BasicTextureVertexShader.txt", "../Shaders/LightVertexShader.txt", "../Shaders/LightTextureVertexShader.txt" };
 const char * fragmentShaderNames[NUM_SHADERS] = { "../Shaders/SkyboxFragmentShader.txt", "../Shaders/ParticleFragmentShader.txt", "../Shaders/BasicTextureFragmentShader.txt", "../Shaders/LightFragmentShader.txt", "../Shaders/LightTextureFragmentShader.txt" };
-
-struct EndPoint {
-	GLuint rigidBodyID;
-	GLfloat value;
-	bool start;
-};
-
-EndPoint xAxisEndpoints[numRigidBodies * 2];
-EndPoint yAxisEndpoints[numRigidBodies * 2];
-EndPoint zAxisEndpoints[numRigidBodies * 2];
-
-int collisionCounts[numRigidBodies][numRigidBodies];
 
 string frf(const float &f)
 {
@@ -234,76 +219,6 @@ void checkPlaneCollisions(RigidBody &rigidBody)
 	}
 }
 
-bool endpoint_sort(const EndPoint& lhs, const EndPoint& rhs)
-{
-	return lhs.value < rhs.value;
-}
-
-void sortEndpointArrays()
-{
-	sort(begin(xAxisEndpoints), end(xAxisEndpoints), endpoint_sort);
-	sort(begin(yAxisEndpoints), end(yAxisEndpoints), endpoint_sort);
-	sort(begin(zAxisEndpoints), end(zAxisEndpoints), endpoint_sort);
-
-	// Sort the x axis endpoints
-	/*for (int i = 1; i < numRigidBodies * 2; i++)
-	{
-		EndPoint x = xAxisEndpoints[i];
-		int j = i - 1;
-		while (j >= 0 && xAxisEndpoints[j].value > x.value)
-		{
-			xAxisEndpoints[j + 1] = xAxisEndpoints[j];
-			j--;
-		}
-		xAxisEndpoints[j + 1] = x;
-	}
-
-	// Sort the y axis endpoints
-	for (int i = 1; i < numRigidBodies * 2; i++)
-	{
-		EndPoint x = yAxisEndpoints[i];
-		int j = i - 1;
-		while (j >= 0 && yAxisEndpoints[j].value > x.value)
-		{
-			yAxisEndpoints[j + 1] = yAxisEndpoints[j];
-			j--;
-		}
-		yAxisEndpoints[j + 1] = x;
-	}
-
-	// Sort the z axis endpoints
-	for (int i = 1; i < numRigidBodies * 2; i++)
-	{
-		EndPoint x = zAxisEndpoints[i];
-		int j = i - 1;
-		while (j >= 0 && zAxisEndpoints[j].value > x.value)
-		{
-			zAxisEndpoints[j + 1] = zAxisEndpoints[j];
-			j--;
-		}
-		zAxisEndpoints[j + 1] = x;
-	}*/
-
-	// Update the indices of the rigidbodies
-	for (int i = 0; i < numRigidBodies * 2; i++)
-	{
-		if (xAxisEndpoints[i].start)
-			rigidbodies[xAxisEndpoints[i].rigidBodyID].xMinI = i;
-		else
-			rigidbodies[xAxisEndpoints[i].rigidBodyID].xMaxI = i;
-
-		if (yAxisEndpoints[i].start)
-			rigidbodies[yAxisEndpoints[i].rigidBodyID].yMinI = i;
-		else
-			rigidbodies[yAxisEndpoints[i].rigidBodyID].yMaxI = i;
-
-		if (zAxisEndpoints[i].start)
-			rigidbodies[zAxisEndpoints[i].rigidBodyID].zMinI = i;
-		else
-			rigidbodies[zAxisEndpoints[i].rigidBodyID].zMaxI = i;
-	}
-}
-
 void updateRigidBodies()
 {
 	for (GLuint i = 0; i < numRigidBodies; i++)
@@ -312,7 +227,6 @@ void updateRigidBodies()
 		// Might change this to user input
 		//computeForcesAndTorque();
 
-		//vec3 xdot = rigidBody.velocity;
 		rigidBody.position += rigidBody.velocity * deltaTime;
 
 		// Check for collision
@@ -384,20 +298,11 @@ void updateRigidBodies()
 				else if (vertex.v[2] > rigidBody.zMax)
 					rigidBody.zMax = vertex.v[2];
 			}
-
-			xAxisEndpoints[rigidBody.xMinI] = EndPoint{ i, rigidBody.xMin, true };
-			xAxisEndpoints[rigidBody.xMaxI] = EndPoint{ i, rigidBody.xMax, false };
-			yAxisEndpoints[rigidBody.yMinI] = EndPoint{ i, rigidBody.yMin, true };
-			yAxisEndpoints[rigidBody.yMaxI] = EndPoint{ i, rigidBody.yMax, false };
-			zAxisEndpoints[rigidBody.zMinI] = EndPoint{ i, rigidBody.zMin, true };
-			zAxisEndpoints[rigidBody.zMaxI] = EndPoint{ i, rigidBody.zMax, false };
 		}
 
 		// Reset the colliding with counter
 		rigidBody.collidingWith = 0;
 	}
-
-	sortEndpointArrays();
 }
 
 void checkBoundingSphereCollisions()
@@ -426,155 +331,34 @@ void checkBoundingSphereCollisions()
 	}
 }
 
+bool isColliding(const RigidBody& bdi, const RigidBody& cdi)
+{
+	if ((bdi.xMax < cdi.xMin || bdi.xMin > cdi.xMax)) return false;
+	if ((bdi.yMax < cdi.yMin || bdi.yMin > cdi.yMax)) return false;
+	if ((bdi.zMax < cdi.zMin || bdi.zMin > cdi.zMax)) return false;
+
+	return true;
+}
+
 void checkAABBCollisions()
 {
-	xActiveList.clear();
-	yActiveList.clear();
-	zActiveList.clear();
-
-	// Check x axis overlaps
-	for (int i = 0; i < numRigidBodies * 2; i++)
-	{
-		if (xAxisEndpoints[i].start)
-		{
-			xActiveList.push_back(xAxisEndpoints[i].rigidBodyID);
-
-			if (xActiveList.size() > 1)
-			{
-				for (int j = 0; j < xActiveList.size() - 1; j++)
-				{
-					for (int k = j + 1; k < xActiveList.size(); k++)
-					{
-						if(xActiveList[j] < xActiveList[k])
-							collisionCounts[xActiveList[j]][xActiveList[k]] = 1;
-						else
-							collisionCounts[xActiveList[k]][xActiveList[j]] = 1;
-						//collisionCounts[j][k] = 1;
-					}
-				}
-			}
-		}
-		else
-		{
-			while (xActiveList.front() != xAxisEndpoints[i].rigidBodyID)
-			{
-				int x = xActiveList.front();
-				xActiveList.erase(xActiveList.begin());
-				xActiveList.push_back(x);
-				//xActiveList.pop();
-				//xActiveList.push(x);
-			}
-			xActiveList.erase(xActiveList.begin());
-			//xActiveList.pop();
-		}
-	}
-
-	// Check y axis overlaps
-	for (int i = 0; i < numRigidBodies * 2; i++)
-	{
-		if (yAxisEndpoints[i].start)
-		{
-			yActiveList.push_back(yAxisEndpoints[i].rigidBodyID);
-
-			if (yActiveList.size() > 1)
-			{
-				for (int j = 0; j < yActiveList.size() - 1; j++)
-				{
-					for (int k = j + 1; k < yActiveList.size(); k++)
-					{
-						//if(collisionCounts[j][k] == 1)
-						//	collisionCounts[j][k] = 2;
-						if (yActiveList[j] < yActiveList[k])
-						{
-							if (collisionCounts[yActiveList[j]][yActiveList[k]] == 1)
-								collisionCounts[yActiveList[j]][yActiveList[k]] = 2;
-						}
-						else
-						{
-							if (collisionCounts[yActiveList[k]][yActiveList[j]] == 1)
-								collisionCounts[yActiveList[k]][yActiveList[j]] = 2;
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			while (yActiveList.front() != yAxisEndpoints[i].rigidBodyID)
-			{
-				int y = yActiveList.front();
-				yActiveList.erase(yActiveList.begin());
-				yActiveList.push_back(y);
-				//yActiveList.pop();
-				//yActiveList.push(x);
-			}
-			yActiveList.erase(yActiveList.begin());
-		}
-	}
-
-	// Check z axis overlaps
-	for (int i = 0; i < numRigidBodies * 2; i++)
-	{
-		if (zAxisEndpoints[i].start)
-		{
-			zActiveList.push_back(zAxisEndpoints[i].rigidBodyID);
-
-			if (zActiveList.size() > 1)
-			{
-				for (int j = 0; j < zActiveList.size() - 1; j++)
-				{
-					for (int k = j + 1; k < zActiveList.size(); k++)
-					{
-						if (zActiveList[j] < zActiveList[k])
-						{
-							if (collisionCounts[zActiveList[j]][zActiveList[k]] == 2)
-								collisionCounts[zActiveList[j]][zActiveList[k]] = 3;
-						}
-						else
-						{
-							if (collisionCounts[zActiveList[k]][zActiveList[j]] == 2)
-								collisionCounts[zActiveList[k]][zActiveList[j]] = 3;
-						}
-						
-					}
-				}
-			}
-		}
-		else
-		{
-			while (zActiveList.front() != zAxisEndpoints[i].rigidBodyID)
-			{
-				int z = zActiveList.front();
-				zActiveList.erase(zActiveList.begin());
-				zActiveList.push_back(z);
-				//zActiveList.pop();
-				//zActiveList.push(x);
-			}
-			zActiveList.erase(zActiveList.begin());
-			//zActiveList.pop();
-		}
-	}
-
+	vector<bool> m_collision(numRigidBodies, false);
 	for (int i = 0; i < numRigidBodies; i++)
 	{
 		for (int j = i + 1; j < numRigidBodies; j++)
 		{
-			if (collisionCounts[i][j] == 3)
+			if (isColliding(rigidbodies[i], rigidbodies[j]))
 			{
-				rigidbodies[i].boundingBoxColour = red;
-				rigidbodies[j].boundingBoxColour = red;
-				rigidbodies[i].collisionAABB = true;
-				rigidbodies[j].collisionAABB = true;
+				m_collision[i] = true;
+				m_collision[j] = true;
 			}
-
-			collisionCounts[i][j] = 0;
 		}
+	}
 
-		if (!rigidbodies[i].collisionAABB)
-			rigidbodies[i].boundingBoxColour = green;
-
-		// Reset the collision
-		rigidbodies[i].collisionAABB = false;
+	for (int k = 0; k < numRigidBodies; k++)
+	{
+		rigidbodies[k].collisionAABB = m_collision[k];
+		rigidbodies[k].boundingBoxColour = m_collision[k] ? red : green;
 	}
 }
 

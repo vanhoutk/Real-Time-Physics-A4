@@ -12,25 +12,19 @@ e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - comput
 e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(814): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Camera.h(129): warning C4244: 'return': conversion from 'double' to 'GLfloat', possible loss of data
 e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\PlaneRotation.h(16): warning C4244: 'return': conversion from 'double' to 'GLfloat', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(287): warning C4305: 'initializing': truncation from 'double' to 'float'
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(288): warning C4305: 'initializing': truncation from 'double' to 'float'
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(295): warning C4018: '<': signed/unsigned mismatch
-main.cpp(344): warning C4018: '<': signed/unsigned mismatch
-main.cpp(358): warning C4018: '<': signed/unsigned mismatch
-main.cpp(432): warning C4018: '<': signed/unsigned mismatch
-main.cpp(434): warning C4018: '<': signed/unsigned mismatch
-main.cpp(469): warning C4018: '<': signed/unsigned mismatch
-main.cpp(471): warning C4018: '<': signed/unsigned mismatch
-main.cpp(512): warning C4018: '<': signed/unsigned mismatch
-main.cpp(514): warning C4018: '<': signed/unsigned mismatch
-main.cpp(697): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(698): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(705): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(706): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(720): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(291): warning C4305: 'initializing': truncation from 'double' to 'float'
+e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(292): warning C4305: 'initializing': truncation from 'double' to 'float'
+e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(299): warning C4018: '<': signed/unsigned mismatch
+main.cpp(269): warning C4018: '<': signed/unsigned mismatch
+main.cpp(283): warning C4018: '<': signed/unsigned mismatch
+main.cpp(498): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+main.cpp(499): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+main.cpp(506): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+main.cpp(507): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+main.cpp(521): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
   Generating code
-  85 of 926 functions ( 9.2%) were compiled, the rest were copied from previous compilation.
-    6 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+  133 of 882 functions (15.1%) were compiled, the rest were copied from previous compilation.
+    91 functions were new in current compilation
+    85 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   A4.vcxproj -> E:\Users\Kris\Documents\College\Fifth Year OneDrive\OneDrive\Fifth Year - Computers\CS7057 - Real-Time Physics\Assignments\Code\Real-Time-Physics-A4\A4\Release\A4.exe
