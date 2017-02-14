@@ -53,7 +53,7 @@ GLfloat friction = 0.05f;
 GLfloat lastX = 400, lastY = 300;
 GLfloat resilience = 0.98f;
 GLuint mode = AABB;
-const GLuint numRigidBodies = 10;
+const GLuint numRigidBodies = 15;
 GLuint shaderProgramID[NUM_SHADERS];
 int screenWidth = 1000;
 int screenHeight = 800;
@@ -388,9 +388,9 @@ void initialiseRigidBodies()
 		GLfloat randomX1 = ((rand() % 10) - 5) / 100000.0f;
 		GLfloat randomY1 = ((rand() % 10) - 5) / 100000.0f;
 		GLfloat randomZ1 = ((rand() % 10) - 5) / 100000.0f;
-		GLfloat randomX2 = ((rand() % 100) - 50) / 20000.0f;
-		GLfloat randomY2 = ((rand() % 100) - 50) / 20000.0f;
-		GLfloat randomZ2 = ((rand() % 100) - 50) / 20000.0f;
+		GLfloat randomX2 = ((rand() % 100) - 50) / 50000.0f;
+		GLfloat randomY2 = ((rand() % 100) - 50) / 50000.0f;
+		GLfloat randomZ2 = ((rand() % 100) - 50) / 50000.0f;
 		rigidBody.angularMomentum = vec4(randomX1, randomY1, randomZ1, 0.0f);
 		rigidBody.linearMomentum = vec4(randomX2, randomY2, randomZ2, 0.0f);
 
