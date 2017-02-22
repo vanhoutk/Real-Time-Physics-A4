@@ -1,30 +1,7 @@
 ﻿  main.cpp
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(518): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(522): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(717): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(729): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(741): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(789): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(806): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(807): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(808): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(809): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Antons_maths_funcs.h(814): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\Camera.h(129): warning C4244: 'return': conversion from 'double' to 'GLfloat', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\PlaneRotation.h(16): warning C4244: 'return': conversion from 'double' to 'GLfloat', possible loss of data
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(291): warning C4305: 'initializing': truncation from 'double' to 'float'
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(292): warning C4305: 'initializing': truncation from 'double' to 'float'
-e:\users\kris\documents\college\fifth year onedrive\onedrive\fifth year - computers\cs7057 - real-time physics\assignments\code\real-time-physics-a4\a4\a4\RigidBody.h(299): warning C4018: '<': signed/unsigned mismatch
-main.cpp(268): warning C4018: '<': signed/unsigned mismatch
-main.cpp(282): warning C4018: '<': signed/unsigned mismatch
-main.cpp(497): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(498): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(505): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(506): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-main.cpp(520): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
   Generating code
-  12 of 882 functions ( 1.4%) were compiled, the rest were copied from previous compilation.
+  4 of 882 functions ( 0.5%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    26 functions had inline decision re-evaluated but remain unchanged
+    27 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   A4.vcxproj -> E:\Users\Kris\Documents\College\Fifth Year OneDrive\OneDrive\Fifth Year - Computers\CS7057 - Real-Time Physics\Assignments\Code\Real-Time-Physics-A4\A4\Release\A4.exe
